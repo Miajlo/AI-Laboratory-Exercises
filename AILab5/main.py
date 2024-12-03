@@ -25,8 +25,6 @@ class NQueens:
     def forward_check(self, row, col):
         """Update domains using forward checking when a queen is placed."""
         updated_domains = [list(self.domains[i]) for i in range(self.num_queens)]
-        print("placement:", row, col)
-        print("pre", updated_domains)
         for r in range(row + 1, self.num_queens):
             if col in updated_domains[r]:
                 updated_domains[r].remove(col)
@@ -36,9 +34,7 @@ class NQueens:
                 updated_domains[r].remove(diagonal_left)
             if diagonal_right in updated_domains[r]:
                 updated_domains[r].remove(diagonal_right)
-        print("post:", updated_domains)
         return updated_domains
-
 
     def count_constraints(self, row, col):
         """Count constraints imposed by placing a queen at (row, col)."""
@@ -54,19 +50,17 @@ class NQueens:
                 count += 1
         return count
 
-
     def degree_heuristic(self, row):
         """Apply degree heuristic to choose the next column."""
         a = sorted(self.domains[row], key=lambda col: self.count_constraints(row, col))
-        print(a)
         return a
 
     def solve(self, row=0):
         """Solve the N-Queens problem using backtracking, forward checking, and degree heuristic."""
-        if row == self.num_queens:
+        if row == self.num_queens:  # Solution is found when we've placed all queens
             return True
 
-        for col in self.degree_heuristic(row):
+        for col in self.mrv_heuristic(row):
             if self.is_safe(row, col):
                 self.board[row] = col
                 original_domains = self.domains
@@ -92,7 +86,7 @@ if __name__ == "__main__":
     num_queens = 4  # Number of queens to place
     nq = NQueens(n, num_queens)
 
-    if nq.solve() and n <= num_queens:
+    if nq.solve():
         print("Solution found:")
         nq.print_board()
     else:
