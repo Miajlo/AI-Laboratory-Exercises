@@ -13,6 +13,15 @@ class NQueens:
                 return False
         return True
 
+    def mrv_heuristic(self, row):
+        """Return columns for a given row sorted by Minimum Remaining Values (MRV)."""
+        return sorted(self.domains[row], key=lambda col: len([
+            r for r in range(row + 1, self.num_queens)  # Check rows below
+            if col in self.domains[r] or
+               col - (r - row) in self.domains[r] or
+               col + (r - row) in self.domains[r]
+        ]))
+
     def forward_check(self, row, col):
         """Update domains using forward checking when a queen is placed."""
         updated_domains = [list(self.domains[i]) for i in range(self.num_queens)]
@@ -30,11 +39,6 @@ class NQueens:
         print("post:", updated_domains)
         return updated_domains
 
-    def degree_heuristic(self, row):
-        """Apply degree heuristic to choose the next column."""
-        a = sorted(self.domains[row], key=lambda col: self.count_constraints(row, col))
-        print(a)
-        return a
 
     def count_constraints(self, row, col):
         """Count constraints imposed by placing a queen at (row, col)."""
@@ -49,6 +53,13 @@ class NQueens:
             if diagonal_right in self.domains[r]:
                 count += 1
         return count
+
+
+    def degree_heuristic(self, row):
+        """Apply degree heuristic to choose the next column."""
+        a = sorted(self.domains[row], key=lambda col: self.count_constraints(row, col))
+        print(a)
+        return a
 
     def solve(self, row=0):
         """Solve the N-Queens problem using backtracking, forward checking, and degree heuristic."""
@@ -78,7 +89,7 @@ class NQueens:
 
 if __name__ == "__main__":
     n = 8  # Size of the board (n x n)
-    num_queens = 8  # Number of queens to place
+    num_queens = 4  # Number of queens to place
     nq = NQueens(n, num_queens)
 
     if nq.solve() and n <= num_queens:
