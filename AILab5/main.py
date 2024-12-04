@@ -1,3 +1,5 @@
+import time
+
 class NQueens:
     def __init__(self, size, num_queens):
         self.size = size
@@ -17,7 +19,7 @@ class NQueens:
     def mrv_heuristic(self, row):
         """Return columns for a given row sorted by Minimum Remaining Values (MRV)."""
         num_queens = self.num_queens
-        print("pre: ", self.domains)
+        #print("pre: ", self.domains)
         def count_remaining_moves(col):
             """Count how many valid moves remain for all rows below the current row."""
             valid_moves = 0
@@ -70,7 +72,7 @@ class NQueens:
 
                 self.domains = original_domains
                 self.board[row] = -1
-
+                self.total_passes += 1
         return False
 
     def print_board(self):
@@ -81,14 +83,17 @@ class NQueens:
         print()
 
 if __name__ == "__main__":
-    n = 4  # Size of the board (n x n)
-    num_queens = 4  # Number of queens to place
+    n = 30  # Size of the board (n x n)
+    num_queens = 30  # Number of queens to place
     nq = NQueens(n, num_queens)
 
+    start_time = time.time()
     if nq.solve():
         print("Solution found:")
         nq.print_board()
     else:
         print("No solution exists.")
 
+    end_time = time.time()
+    print("Time taken:", end_time - start_time)
     print("Total passes: ", nq.total_passes)
