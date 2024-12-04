@@ -3,7 +3,8 @@ class NQueens:
         self.size = size
         self.num_queens = num_queens
         self.board = [-1] * num_queens  # Represents the queen positions on the board. -1 means no queen placed yet.
-        self.domains = [list(range(size)) for _ in range(num_queens)]  # Domains of each row.
+        self.domains = [set(range(size)) for _ in range(num_queens)]
+        self.total_passes = 0
 
     def is_safe(self, row, col):
         """Check if placing a queen at (row, col) is safe."""
@@ -15,17 +16,34 @@ class NQueens:
 
     def mrv_heuristic(self, row):
         """Return columns for a given row sorted by Minimum Remaining Values (MRV)."""
-        return sorted(self.domains[row], key=lambda col: len([
-            r for r in range(row + 1, self.num_queens)  # Check rows below
-            if col in self.domains[r] or
-               col - (r - row) in self.domains[r] or
-               col + (r - row) in self.domains[r]
-        ]))
+        num_queens = self.num_queens
+        print("pre: ", self.domains)
+        def count_remaining_moves(col):
+            """Count how many valid moves remain for all rows below the current row."""
+            valid_moves = 0
+            for r in range(row + 1, num_queens):
+
+                if col not in self.domains[r]:
+                    valid_moves += 1
+                if col - (r - row) not in self.domains[r]:
+                    valid_moves += 1
+                if col + (r - row) not in self.domains[r]:
+                    valid_moves += 1
+
+                self.total_passes += 1
+
+            return valid_moves
+
+        # Sort columns in the domain of the current row by remaining valid moves
+        return sorted(self.domains[row], key=count_remaining_moves)
+
+
 
     def forward_check(self, row, col):
         """Update domains using forward checking when a queen is placed."""
-        updated_domains = [list(self.domains[i]) for i in range(self.num_queens)]
+        updated_domains = [set(self.domains[i]) for i in range(self.num_queens)]
         for r in range(row + 1, self.num_queens):
+            self.total_passes += 1
             if col in updated_domains[r]:
                 updated_domains[r].remove(col)
             diagonal_left = col - (r - row)
@@ -35,25 +53,6 @@ class NQueens:
             if diagonal_right in updated_domains[r]:
                 updated_domains[r].remove(diagonal_right)
         return updated_domains
-
-    def count_constraints(self, row, col):
-        """Count constraints imposed by placing a queen at (row, col)."""
-        count = 0
-        for r in range(row + 1, self.num_queens):
-            if col in self.domains[r]:
-                count += 1
-            diagonal_left = col - (r - row)
-            diagonal_right = col + (r - row)
-            if diagonal_left in self.domains[r]:
-                count += 1
-            if diagonal_right in self.domains[r]:
-                count += 1
-        return count
-
-    def degree_heuristic(self, row):
-        """Apply degree heuristic to choose the next column."""
-        a = sorted(self.domains[row], key=lambda col: self.count_constraints(row, col))
-        return a
 
     def solve(self, row=0):
         """Solve the N-Queens problem using backtracking, forward checking, and degree heuristic."""
@@ -82,7 +81,7 @@ class NQueens:
         print()
 
 if __name__ == "__main__":
-    n = 8  # Size of the board (n x n)
+    n = 4  # Size of the board (n x n)
     num_queens = 4  # Number of queens to place
     nq = NQueens(n, num_queens)
 
@@ -91,3 +90,5 @@ if __name__ == "__main__":
         nq.print_board()
     else:
         print("No solution exists.")
+
+    print("Total passes: ", nq.total_passes)
