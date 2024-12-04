@@ -1,13 +1,14 @@
 import time
 
 class NQueens:
-    def __init__(self, size, num_queens, mrv = True):
+    def __init__(self, size, num_queens, queen_clr = True, mrv = True):
         self.size = size
         self.num_queens = num_queens
         self.board = [-1] * num_queens
         self.domains = [set(range(size)) for _ in range(num_queens)]
         self.total_passes = 0
         self.mrv = mrv
+        self.queen_char = "♛" if queen_clr else "♕"
 
     def count_remaining_moves(self, row, col):
         """Count valid moves for rows below the current row."""
@@ -73,7 +74,9 @@ class NQueens:
         if row == self.num_queens:
             return True
 
-        for col in self.mrv_heuristic(row) if self.mrv else self.custom_heuristic(row):
+        sorted_row = self.mrv_heuristic(row) if self.mrv else self.custom_heuristic(row)
+
+        for col in sorted_row:
             self.board[row] = col
             is_valid, updates = self.forward_check(row, col)
 
@@ -87,15 +90,17 @@ class NQueens:
     def print_board(self):
         """Print the board configuration."""
         for r in range(self.size):
-            row = ["Q" if r < self.num_queens and self.board[r] == c else "." for c in range(self.size)]
+            row = [self.queen_char if r < self.num_queens and self.board[r] == c
+                   else "■" if (c+r) % 2 != 0 else "□" for c in range(self.size)]
             print(" ".join(row))
         print()
 
 if __name__ == "__main__":
     use_mrv = False
-    n = 16  # Size of the board (n x n)
-    num_queens = 16  # Number of queens to place
-    nq = NQueens(n, num_queens, use_mrv)
+    queen_clr = False
+    n = 4  # Size of the board (n x n)
+    num_queens = 4  # Number of queens to place
+    nq = NQueens(n, num_queens, queen_clr, use_mrv)
 
     start_time = time.time()
     if nq.solve():
