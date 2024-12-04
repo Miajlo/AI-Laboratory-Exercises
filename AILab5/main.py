@@ -30,7 +30,7 @@ class NQueens:
     def mrv_heuristic(self, row):
         """Return columns for a given row sorted by Minimum Remaining Values (MRV)."""
 
-        return sorted(self.domains[row], key=lambda col: self.count_remaining_moves(row, col))
+        return sorted(self.domains[row], key=lambda col: self.count_remaining_moves(row, col)) # N logN * C
 
 
     def custom_heuristic(self, row):
@@ -92,9 +92,10 @@ class NQueens:
         print()
 
 if __name__ == "__main__":
-    n = 30  # Size of the board (n x n)
-    num_queens = 30  # Number of queens to place
-    nq = NQueens(n, num_queens, False)
+    use_mrv = False
+    n = 16  # Size of the board (n x n)
+    num_queens = 16  # Number of queens to place
+    nq = NQueens(n, num_queens, use_mrv)
 
     start_time = time.time()
     if nq.solve():
