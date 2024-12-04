@@ -1,78 +1,87 @@
 import time
 
 class NQueens:
-    def __init__(self, size, num_queens):
+    def __init__(self, size, num_queens, mrv = True):
         self.size = size
         self.num_queens = num_queens
-        self.board = [-1] * num_queens  # Represents the queen positions on the board. -1 means no queen placed yet.
+        self.board = [-1] * num_queens
         self.domains = [set(range(size)) for _ in range(num_queens)]
         self.total_passes = 0
+        self.mrv = mrv
 
-    def is_safe(self, row, col):
-        """Check if placing a queen at (row, col) is safe."""
-        for r in range(row):
-            c = self.board[r]
-            if c == col or abs(c - col) == abs(r - row):
-                return False
-        return True
+    def count_remaining_moves(self, row, col):
+        """Count valid moves for rows below the current row."""
+        count = 0
+        for r in range(row + 1, self.num_queens):
+            # Calculate potential conflicts
+            diagonal_left = col - (r - row)
+            diagonal_right = col + (r - row)
+
+            # Count valid moves: exclude conflicts from the domain
+            if col not in self.domains[r]:
+                count += 1
+            if diagonal_left not in self.domains[r]:
+                count += 1
+            if diagonal_right not in self.domains[r]:
+                count += 1
+            self.total_passes += 1
+        return count
 
     def mrv_heuristic(self, row):
         """Return columns for a given row sorted by Minimum Remaining Values (MRV)."""
-        num_queens = self.num_queens
-        #print("pre: ", self.domains)
-        def count_remaining_moves(col):
-            """Count how many valid moves remain for all rows below the current row."""
-            valid_moves = 0
-            for r in range(row + 1, num_queens):
 
-                if col not in self.domains[r]:
-                    valid_moves += 1
-                if col - (r - row) not in self.domains[r]:
-                    valid_moves += 1
-                if col + (r - row) not in self.domains[r]:
-                    valid_moves += 1
+        return sorted(self.domains[row], key=lambda col: self.count_remaining_moves(row, col))
 
+
+    def custom_heuristic(self, row):
+
+        def count_effected_squares(col):
+            count = 0
+            for r in range(row + 1, self.num_queens):
+                if col in self.domains[r]:
+                    count += 1
+                if (col - (r - row)) in self.domains[r]:
+                    count += 1
+                if (col + (r - row)) in self.domains[r]:
+                    count += 1
                 self.total_passes += 1
+            return count
 
-            return valid_moves
-
-        # Sort columns in the domain of the current row by remaining valid moves
-        return sorted(self.domains[row], key=count_remaining_moves)
-
-
+        # Sort the columns by the number of remaining valid moves
+        return sorted(self.domains[row], key=count_effected_squares)
 
     def forward_check(self, row, col):
         """Update domains using forward checking when a queen is placed."""
-        updated_domains = [set(self.domains[i]) for i in range(self.num_queens)]
+        updates = []
         for r in range(row + 1, self.num_queens):
             self.total_passes += 1
-            if col in updated_domains[r]:
-                updated_domains[r].remove(col)
-            diagonal_left = col - (r - row)
-            diagonal_right = col + (r - row)
-            if diagonal_left in updated_domains[r]:
-                updated_domains[r].remove(diagonal_left)
-            if diagonal_right in updated_domains[r]:
-                updated_domains[r].remove(diagonal_right)
-        return updated_domains
+            for conflict in (col, col - (r - row), col + (r - row)):
+                if conflict in self.domains[r]:
+                    self.domains[r].remove(conflict)
+                    updates.append((r, conflict))
+            if not self.domains[r]:  # Early exit if any domain becomes empty
+                return False, updates
+        return True, updates
+
+    def restore_domains(self, updates):
+        """Undo the changes to the domains."""
+        for r, col in updates:
+            self.domains[r].add(col)
 
     def solve(self, row=0):
-        """Solve the N-Queens problem using backtracking, forward checking, and degree heuristic."""
-        if row == self.num_queens:  # Solution is found when we've placed all queens
+        """Solve the N-Queens problem using backtracking with MRV and forward checking."""
+        if row == self.num_queens:
             return True
 
-        for col in self.mrv_heuristic(row):
-            if self.is_safe(row, col):
-                self.board[row] = col
-                original_domains = self.domains
-                self.domains = self.forward_check(row, col)
+        for col in self.mrv_heuristic(row) if self.mrv else self.custom_heuristic(row):
+            self.board[row] = col
+            is_valid, updates = self.forward_check(row, col)
 
-                if all(self.domains[r] for r in range(row + 1, self.num_queens)) and self.solve(row + 1):
-                    return True
+            if is_valid and self.solve(row + 1):
+                return True
 
-                self.domains = original_domains
-                self.board[row] = -1
-                self.total_passes += 1
+            self.restore_domains(updates)  # Backtrack: Restore domains
+            self.board[row] = -1
         return False
 
     def print_board(self):
@@ -85,7 +94,7 @@ class NQueens:
 if __name__ == "__main__":
     n = 30  # Size of the board (n x n)
     num_queens = 30  # Number of queens to place
-    nq = NQueens(n, num_queens)
+    nq = NQueens(n, num_queens, False)
 
     start_time = time.time()
     if nq.solve():
